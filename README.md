@@ -43,5 +43,3 @@ This is likely because the ANT version that is installed with your version of Ec
 - In Eclipse, go to Eclipse -> Preferences -> Ant -> Runtime
 - Click on "Ant Home'' button on the right.
 - Select the folder, which you extracted ANT into (e.g., /Users/gvgai/ant/apache-ant-1.9.4/)
-
-# TSIp1
