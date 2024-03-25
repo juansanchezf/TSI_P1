@@ -55,23 +55,31 @@ public class AgenteDijkstra extends AbstractPlayer{
 		Integer contador = 0;
 		
 		System.out.println("Comenzando la búsqueda del camino");
-		System.out.println("Posición del avatar: " + avatar.x + " " + avatar.y);
-		System.out.println("Posición del portal: " + portal.x + " " + portal.y);
-		System.out.println("Tamaño de Abiertos: " + Abiertos.size());
+		System.out.println("Avatar: (" + avatar.x + " , " + avatar.y + ")");
+		System.out.println("Portal: (" + portal.x + " , " + portal.y + ")");
 		
-		System.out.println("La orientación del avatar es: " + actual.getOrientacion().x + " " + actual.getOrientacion().y);
+		System.out.println("Orientación inicial: (" + actual.getOrientacion().x + " , " + actual.getOrientacion().y + ")");
 		
-		while(!Abiertos.isEmpty() && actual.getFila() != portal.y && actual.getColumna() != portal.x){
-
+		while(!Abiertos.isEmpty()){
+			Abiertos.poll();
+			
+			if (actual.getFila() == portal.y && actual.getColumna() == portal.x) {
+				System.out.println("Camino encontrado");
+				camino = actual.getSecuencia();
+				return true;
+			}
+			
 			Visitados.add(actual);
 			
-			System.out.println("AAAPosición actual: " + actual.getPosicion().x + " " + actual.getPosicion().y);
+			System.out.println("Posición actual: " + actual.getPosicion().x + " " + actual.getPosicion().y + " Orientación: " + actual.getOrientacion().x + " " + actual.getOrientacion().y);
 			
 			// Arriba
 			Vector2d newPosUp = new Vector2d(actual.getColumna(), actual.getFila() - 1);
 			System.out.println("Nueva posición arriba: " + newPosUp.x + " " + newPosUp.y);
 			if(actual.getFila() - 1 >= 0 && esTransitable(newPosUp)){
-				if(actual.getOrientacion() == new Vector2d(-1,0)) {
+				System.out.println("Arriba es transitable");
+				if(actual.getOrientacion().x == 0 && actual.getOrientacion().y ==-1) {
+					System.out.println("Orientación igual a la que se va a meter");
 					Nodo hijoUp = new Nodo(newPosUp, actual.getOrientacion(), actual.getDistancia() + 1);
 					hijoUp.setSecuencia(actual.getSecuencia());
 					
@@ -84,8 +92,9 @@ public class AgenteDijkstra extends AbstractPlayer{
 					}
 				}
 				else {
-					Nodo hijoUp = new Nodo(actual.getPosicion(), new Vector2d(-1, 0), actual.getDistancia());
+					Nodo hijoUp = new Nodo(actual.getPosicion(), new Vector2d(0,-1), actual.getDistancia());
 					hijoUp.setSecuencia(actual.getSecuencia());
+					System.out.println("Orientación distinta a la que era transitable.");
 					
 					if (!Visitados.contains(hijoUp)) {
 						hijoUp.addAccion(ACTIONS.ACTION_UP);
@@ -100,8 +109,9 @@ public class AgenteDijkstra extends AbstractPlayer{
 			// Abajo
 			Vector2d newPosDown = new Vector2d(actual.getColumna(), actual.getFila() + 1);
 			System.out.println("Nueva posición abajo: " + newPosDown.x + " " + newPosDown.y);
-			if(actual.getFila() + 1 <= (stateObs.getObservationGrid()[0].length - 1)){
-				if(actual.getOrientacion() == new Vector2d(1,0)) {
+			if(actual.getFila() + 1 <= (stateObs.getObservationGrid()[0].length - 1) && esTransitable(newPosDown)){
+				System.out.println("Abajo es transitable");
+				if(actual.getOrientacion().x == 0 && actual.getOrientacion().y ==1) {
 					Nodo hijoDown = new Nodo(newPosDown, actual.getOrientacion(), actual.getDistancia() + 1);
 					hijoDown.setSecuencia(actual.getSecuencia());
 					
@@ -114,7 +124,7 @@ public class AgenteDijkstra extends AbstractPlayer{
 					}
 				}
 				else {
-					Nodo hijoDown = new Nodo(actual.getPosicion(), new Vector2d(1, 0), actual.getDistancia());
+					Nodo hijoDown = new Nodo(actual.getPosicion(), new Vector2d(0,1), actual.getDistancia());
 					hijoDown.setSecuencia(actual.getSecuencia());
 					
 					if (!Visitados.contains(hijoDown)) {
@@ -124,7 +134,7 @@ public class AgenteDijkstra extends AbstractPlayer{
 				}
 			}
 			else {
-				System.out.println("No era transitable");
+				System.out.println("Abajo no era transitable");
 			}
 			
 			
@@ -132,7 +142,8 @@ public class AgenteDijkstra extends AbstractPlayer{
 			Vector2d newPosLeft = new Vector2d(actual.getColumna() - 1, actual.getFila());
 			System.out.println("Nueva posición izquierda: " + newPosLeft.x + " " + newPosLeft.y);
 			if(actual.getColumna() - 1 >= (0) && esTransitable(newPosLeft)){
-				if(actual.getOrientacion() == new Vector2d(0,-1)) {
+				System.out.println("Izquierda es transitable");
+				if(actual.getOrientacion().x == -1 && actual.getOrientacion().y == 0) {
 					Nodo hijoLeft = new Nodo(newPosLeft, actual.getOrientacion(), actual.getDistancia() + 1);
 					hijoLeft.setSecuencia(actual.getSecuencia());
 					
@@ -145,7 +156,7 @@ public class AgenteDijkstra extends AbstractPlayer{
 					}
 				}
 				else {
-					Nodo hijoLeft = new Nodo(actual.getPosicion(), new Vector2d(0, -1), actual.getDistancia());
+					Nodo hijoLeft = new Nodo(actual.getPosicion(), new Vector2d(-1,0), actual.getDistancia());
 					hijoLeft.setSecuencia(actual.getSecuencia());
 					
 					if (!Visitados.contains(hijoLeft)) {
@@ -155,14 +166,14 @@ public class AgenteDijkstra extends AbstractPlayer{
 				}
 			}
 			else {
-				System.out.println("No era transitable");
+				System.out.println("Izquierda no era transitable");
 			}
 			
 			// Derecha
 			Vector2d newPosRight = new Vector2d(actual.getColumna() + 1, actual.getFila());
 			System.out.println("Nueva posición derecha: " + newPosRight.x + " " + newPosRight.y);
 			if(actual.getColumna() + 1 <= (stateObs.getObservationGrid().length - 1) && esTransitable(newPosRight)){
-				if(actual.getOrientacion() == new Vector2d(0,1)) {
+				if(actual.getOrientacion().x == 1 && actual.getOrientacion().y == 0) {
 					Nodo hijoRight = new Nodo(newPosRight, actual.getOrientacion(), actual.getDistancia() + 1);
 					hijoRight.setSecuencia(actual.getSecuencia());
 					
@@ -172,7 +183,7 @@ public class AgenteDijkstra extends AbstractPlayer{
 					}
 				}
 				else {
-					Nodo hijoRight = new Nodo(actual.getPosicion(), new Vector2d(0,1), actual.getDistancia());
+					Nodo hijoRight = new Nodo(actual.getPosicion(), new Vector2d(1,0), actual.getDistancia());
 					hijoRight.setSecuencia(actual.getSecuencia());
 					
 					if (!Visitados.contains(hijoRight)) {
@@ -185,25 +196,26 @@ public class AgenteDijkstra extends AbstractPlayer{
 				}
 			}
 			else {
-				System.out.println("No era transitable");
+				System.out.println("Derecha no era transitable");
 			}
 			
 			if (!Abiertos.isEmpty()) {
-				System.out.println("Tamaño de Abiertos: " + Abiertos.size());
-				
-				System.out.println("El primer nodo a escoger es " + Abiertos.peek().getPosicion().x + " " + Abiertos.peek().getPosicion().y + " con orientación " + Abiertos.peek().getOrientacion().x + " " + Abiertos.peek().getOrientacion().y);
-				actual = Abiertos.poll();
-				
+				System.out.println("Tras meter los hijos, tamaño de Abiertos: " + Abiertos.size());
+				System.out.println("El nodo en abiertos es: " + Abiertos.peek().getPosicion().x + " " + Abiertos.peek().getPosicion().y + " " + Abiertos.peek().getOrientacion().x + " " + Abiertos.peek().getOrientacion().y);
+				actual = Abiertos.peek();
 				while (Visitados.contains(actual) && !Abiertos.isEmpty()) {
 					actual = Abiertos.poll();
+					actual = Abiertos.peek();
 				}
+			}
+			else {
+				System.out.println("Abiertos vacío");
 			}
 			
 			System.out.println("Posición actual: " + actual.getPosicion().x + " " + actual.getPosicion().y);
+			
 			contador++;
 			
-			if(contador > 10)
-				break;
 		}
 		System.out.println("Tamaño de Visitados: " + Visitados.size());
 		System.out.println("Número de nodos visitados: " + contador);

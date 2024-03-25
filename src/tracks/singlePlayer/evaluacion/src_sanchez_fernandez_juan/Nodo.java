@@ -1,5 +1,6 @@
 package tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Queue;
 import ontology.Types.ACTIONS;
 
@@ -61,9 +62,6 @@ public class Nodo implements Comparable<Nodo>{
 		this.orientacion = orientacion;
 	}
 	
-	public int compareTo(Nodo otro) {
-		return Integer.compare(this.distancia, otro.distancia);
-	}
 	
 	
 	public void clearSecuencia() {
@@ -82,28 +80,29 @@ public class Nodo implements Comparable<Nodo>{
 		return this.secuencia;
 	}
 	
+	
+	@Override
+	public int compareTo(Nodo otro) {
+		return Integer.compare(this.distancia, otro.distancia);
+	}
+	
 	@Override
 	public boolean equals(Object obj) {
 	    if (this == obj) return true;
 	    if (obj == null || getClass() != obj.getClass()) return false;
-
-	    Nodo nodo = (Nodo) obj;
-
-	    if (Double.compare(nodo.getPosicion().x, posicion.x) != 0) return false;
-	    if (Double.compare(nodo.getPosicion().y, posicion.y) != 0) return false;
-	    
-	    return true;
+	    Nodo node = (Nodo) obj;
+	    // Comprueba igualdad tanto de posición como de orientación
+	    return Double.compare(posicion.x, node.posicion.x) == 0 &&
+	           Double.compare(posicion.y, node.posicion.y) == 0 &&
+	           Double.compare(orientacion.x, node.orientacion.x) == 0 &&
+	           Double.compare(orientacion.y, node.orientacion.y) == 0;
 	}
-	
+
+
 	@Override
 	public int hashCode() {
-	    int result;
-	    long temp;
-	    temp = Double.doubleToLongBits(posicion.x);
-	    result = (int) (temp ^ (temp >>> 32));
-	    temp = Double.doubleToLongBits(posicion.y);
-	    result = 31 * result + (int) (temp ^ (temp >>> 32));
-	    result = 31 * result + (orientacion != null ? orientacion.hashCode() : 0);
-	    return result;
+	    // Incluye orientación en el cálculo del hash
+	    return Objects.hash(posicion.x, posicion.y, orientacion.x, orientacion.y);
 	}
+
 }
