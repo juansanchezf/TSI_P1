@@ -25,9 +25,20 @@ public class Nodo implements Comparable<Nodo>{
 		this.distancia = distancia;
 		this.secuencia = new LinkedList<ACTIONS>();
 	}
+	
+	public Nodo(Nodo otro) {
+		this.posicion = new Vector2d(otro.posicion.x, otro.posicion.y);
+		this.orientacion = new Vector2d(otro.orientacion.x, otro.orientacion.y);
+		this.distancia = otro.distancia;
+		this.secuencia = new LinkedList<ACTIONS>(otro.secuencia);
+	}
 
 	public Vector2d getPosicion() {
 		return this.posicion;
+	}
+	
+	public void setPosicion(Vector2d posicion) {
+		this.posicion = posicion;
 	}
 	
 	public double getFila() {
@@ -90,19 +101,24 @@ public class Nodo implements Comparable<Nodo>{
 	public boolean equals(Object obj) {
 	    if (this == obj) return true;
 	    if (obj == null || getClass() != obj.getClass()) return false;
-	    Nodo node = (Nodo) obj;
-	    // Comprueba igualdad tanto de posición como de orientación
-	    return Double.compare(posicion.x, node.posicion.x) == 0 &&
-	           Double.compare(posicion.y, node.posicion.y) == 0 &&
-	           Double.compare(orientacion.x, node.orientacion.x) == 0 &&
-	           Double.compare(orientacion.y, node.orientacion.y) == 0;
+	    Nodo otro = (Nodo) obj;
+	    
+	    double thisX = Math.round(this.posicion.x);
+	    double thisY = Math.round(this.posicion.y);
+	    double otroX = Math.round(otro.posicion.x);
+	    double otroY = Math.round(otro.posicion.y);
+	    
+	    double thisOrientX = Math.round(this.orientacion.x);
+	    double thisOrientY = Math.round(this.orientacion.y);
+	    double otroOrientX = Math.round(otro.orientacion.x);
+	    double otroOrientY = Math.round(otro.orientacion.y);
+	    
+	    return (thisX == otroX) && (thisY == otroY) && (thisOrientX == otroOrientX) && (thisOrientY == otroOrientY);
 	}
-
 
 	@Override
 	public int hashCode() {
-	    // Incluye orientación en el cálculo del hash
-	    return Objects.hash(posicion.x, posicion.y, orientacion.x, orientacion.y);
+	    return Objects.hash(Math.round(posicion.x), Math.round(posicion.y), Math.round(orientacion.x), Math.round(orientacion.y));
 	}
 
 }
