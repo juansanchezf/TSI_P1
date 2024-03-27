@@ -10,7 +10,9 @@ public class Nodo implements Comparable<Nodo>{
 	Vector2d posicion;
 	Vector2d orientacion;
 	Queue<ACTIONS> secuencia;
-	int distancia = Integer.MAX_VALUE;
+	int g = Integer.MAX_VALUE;
+	int h = 0;
+	int f = 0;
 	
 	
 	public Nodo(double x, double y) {
@@ -19,17 +21,19 @@ public class Nodo implements Comparable<Nodo>{
 		this.orientacion = null;
 	}
 	
-	public Nodo(Vector2d posicion, Vector2d orientacion, int distancia) {
+	public Nodo(Vector2d posicion, Vector2d orientacion, int g) {
 		this.posicion = new Vector2d(posicion.x, posicion.y);
 		this.orientacion = new Vector2d(orientacion.x, orientacion.y);
-		this.distancia = distancia;
+		this.g = g;
 		this.secuencia = new LinkedList<ACTIONS>();
 	}
 	
 	public Nodo(Nodo otro) {
 		this.posicion = new Vector2d(otro.posicion.x, otro.posicion.y);
 		this.orientacion = new Vector2d(otro.orientacion.x, otro.orientacion.y);
-		this.distancia = otro.distancia;
+		this.g = otro.g;
+		this.h = otro.h;
+		this.f = otro.f;
 		this.secuencia = new LinkedList<ACTIONS>(otro.secuencia);
 	}
 
@@ -57,12 +61,24 @@ public class Nodo implements Comparable<Nodo>{
 		this.posicion.x = x;
 	}
 	
-	public int getDistancia() {
-		return this.distancia;
+	public int getG() {
+		return this.g;
 	}
 	
-	public void setDistancia(int distancia) {
-		this.distancia = distancia;
+	public void setG(int g) {
+		this.g = g;
+	}
+	
+	public int getH() {
+		return this.h;
+	}
+	
+	public void setH(int h) {
+		this.h = h;
+	}
+	
+	public void actualizaF() {
+		this.f = this.g + this.h;
 	}
 	
 	public Vector2d getOrientacion() {
@@ -72,7 +88,6 @@ public class Nodo implements Comparable<Nodo>{
 	public void setOrientacion(Vector2d orientacion) {
 		this.orientacion = orientacion;
 	}
-	
 	
 	
 	public void clearSecuencia() {
@@ -94,7 +109,9 @@ public class Nodo implements Comparable<Nodo>{
 	
 	@Override
 	public int compareTo(Nodo otro) {
-		return Integer.compare(this.distancia, otro.distancia);
+		actualizaF();
+		
+		return Integer.compare(this.f, otro.f);
 	}
 	
 	@Override

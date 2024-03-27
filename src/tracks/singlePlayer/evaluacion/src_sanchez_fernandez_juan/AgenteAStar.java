@@ -12,42 +12,43 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.HashSet;
 
-
-/**
- * 
-*/
-public class AgenteDijkstra extends AbstractPlayer{	
+public class AgenteAStar extends AbstractPlayer{
 	boolean intransitables[][];
 	Vector2d fescala;
 	Queue<ACTIONS> camino;
 	
-	/**
-	 * @brief Constructor del agente
-	 * @param stateObs
-	 * @param elapsedTimer
-	 */
-	public AgenteDijkstra(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-        init(stateObs,elapsedTimer);
-	}
-	
-	//private boolean esTransitable(double x, double y);
 	
 	private boolean esTransitable(Vector2d posicion) {
 		return !intransitables[(int)posicion.x][(int) posicion.y];
+	} 
+	
+	
+	private int distManhattan(Vector2d a, Vector2d b) {
+		return (int) (Math.abs(a.x - b.x) + Math.abs(a.y - b.y));
 	}
 	
-	private boolean Dijkstra(StateObservation stateObs, Vector2d portal, ElapsedCpuTimer elapsedTimer) {
+	private void actualizaF(Nodo nodo, Vector2d portal) {
+		nodo.setH(distManhattan(nodo.posicion, portal));
+		nodo.g++;
+		nodo.actualizaF();
+	}
+	private boolean AStar(StateObservation stateObs, Vector2d portal, ElapsedCpuTimer elapsedTimer)
+	{
 		// Inicializamos la cola de prioridad de nodos abiertos y el conjunto de nodos visitados
 		PriorityQueue<Nodo> abiertos = new PriorityQueue<Nodo>();
 		HashSet<Nodo> cerrados = new HashSet<Nodo>();
-
+		
 		// Obtenemos la posicion del avatar y creamos el nodo inicial
 		Vector2d posAvatar = new Vector2d(stateObs.getAvatarPosition().x /fescala.x ,	stateObs.getAvatarPosition().y/fescala.y);
 		
-		//Se inicializa el nodo a la posición y orientación del avatar y a distancia 0
-		Nodo inicial = new Nodo(posAvatar, stateObs.getAvatarOrientation(), 0);		
-		abiertos.add(inicial);		
-
+		//Se inicializa el nodo a la posición y orientación del avatar y a valor g  = 0;
+		Nodo inicial = new Nodo(posAvatar, stateObs.getAvatarOrientation(), 0);
+		inicial.setG(0);
+		inicial.setH(distManhattan(posAvatar, portal));
+		inicial.actualizaF();
+		
+		abiertos.add(inicial);
+		
 		Nodo actual = null;
 		
 		while(!abiertos.isEmpty()) {
@@ -59,42 +60,38 @@ public class AgenteDijkstra extends AbstractPlayer{
 				return true;
 			}
 			
-			// Si ya se ha visitado este nodo, se salta, si no, se añade a cerrados
-			if (!cerrados.add(actual)) continue;
-						
-			//Comenzamos a generar los hijos
+			if(!cerrados.add(actual))	continue;
 			
-			// ARRIBA
+			//ARRIBA
 			Nodo hijoUp = new Nodo(actual);
-			Vector2d newPosUp = new Vector2d(actual.getColumna(), actual.getFila() - 1);
-			Vector2d orientacionUp = new Vector2d(0,-1);
-			
-			if (hijoUp.getFila() - 1 >= 0 && esTransitable(newPosUp)) 
+			Vector2d newPosUp = new Vector2d(actual.getColumna(), actual.getFila()-1), orientacionUp = new Vector2d(0,-1);
+			if(hijoUp.getFila()-1 >= 0 && esTransitable(newPosUp)) 
 			{
-				if (hijoUp.getOrientacion().equals(orientacionUp)) 
+				if(hijoUp.getOrientacion().equals(orientacionUp)) 
 				{
 					hijoUp.setPosicion(newPosUp);
-					hijoUp.setG(hijoUp.getG() + 1);	
-				} else 
+					actualizaF(hijoUp,portal);	
+				}
+				else
 					hijoUp.setOrientacion(orientacionUp);
-				if (!cerrados.contains(hijoUp))
+				
+				if(!cerrados.contains(hijoUp)) 
 				{
 					hijoUp.addAccion(ACTIONS.ACTION_UP);
 					abiertos.add(hijoUp);
-				}	
-			} 
+				}
+			}
 			
-			// ABAJO
+			//ABAJO
 			Nodo hijoDown = new Nodo(actual);
-			Vector2d newPosDown = new Vector2d(actual.getColumna(), actual.getFila() + 1);
-			Vector2d orientacionDown = new Vector2d(0,1);
+			Vector2d newPosDown = new Vector2d(actual.getColumna(), actual.getFila() + 1), orientacionDown = new Vector2d(0,1); 
 			
 			if (hijoDown.getFila() + 1 <= (stateObs.getObservationGrid()[0].length - 1) && esTransitable(newPosDown))
 			{
 				if (hijoDown.getOrientacion().equals(orientacionDown)) 
 				{
 					hijoDown.setPosicion(newPosDown);
-					hijoDown.setG(hijoDown.getG() + 1);
+					actualizaF(hijoDown, portal);
 				} else
 					hijoDown.setOrientacion(orientacionDown);
 				
@@ -107,15 +104,14 @@ public class AgenteDijkstra extends AbstractPlayer{
 			
 			// IZQUIERDA
 			Nodo hijoLeft = new Nodo(actual);
-			Vector2d newPosLeft = new Vector2d(actual.getColumna() - 1, actual.getFila());
-			Vector2d orientacionLeft = new Vector2d(-1,0);
+			Vector2d newPosLeft = new Vector2d(actual.getColumna() - 1, actual.getFila()), orientacionLeft = new Vector2d(-1,0);
 						
 			if(hijoLeft.getColumna() - 1 >= 0 && esTransitable(newPosLeft))
             {				
 				if(hijoLeft.getOrientacion().equals(orientacionLeft))
 				{
                     hijoLeft.setPosicion(newPosLeft);
-                    hijoLeft.setG(hijoLeft.getG() + 1);
+                    actualizaF(hijoLeft, portal);
                 } else
                 	hijoLeft.setOrientacion(orientacionLeft);
 				if(!cerrados.contains(hijoLeft))
@@ -123,18 +119,17 @@ public class AgenteDijkstra extends AbstractPlayer{
                     hijoLeft.addAccion(ACTIONS.ACTION_LEFT);
                     abiertos.add(hijoLeft);
                 }
-            }	
+            }
 			
 			// DERECHA
 			Nodo hijoRight = new Nodo(actual);
-			Vector2d newPosRight = new Vector2d(actual.getColumna() + 1, actual.getFila());
-			Vector2d orientacionRight = new Vector2d(1,0);			
+			Vector2d newPosRight = new Vector2d(actual.getColumna() + 1, actual.getFila()), orientacionRight = new Vector2d(1,0);			
 			if(hijoRight.getColumna() + 1 <= (stateObs.getObservationGrid().length - 1) && esTransitable(newPosRight))
             {                
                 if(hijoRight.getOrientacion().equals(orientacionRight))
                 {
                     hijoRight.setPosicion(newPosRight);
-                    hijoRight.setG(hijoRight.getG() + 1);
+                    actualizaF(hijoRight, portal);
                 } else
                 	hijoRight.setOrientacion(orientacionRight);
                 if(!cerrados.contains(hijoRight))
@@ -143,9 +138,14 @@ public class AgenteDijkstra extends AbstractPlayer{
                     abiertos.add(hijoRight);
                 }
             }
-		}		
+		}
+		
 		return false;
-    }
+	}
+
+	public AgenteAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+		init(stateObs, elapsedTimer);
+	}
 	
 	public void init(StateObservation stateObs, ElapsedCpuTimer elapsedTimer){
 		// Obtenemos las posiciones de los obstaculos
@@ -175,7 +175,7 @@ public class AgenteDijkstra extends AbstractPlayer{
 						
 		// Llamamos a Dijkstra
 		long tInicio = System.nanoTime();
-		boolean hayCamino = Dijkstra(stateObs, portal, elapsedTimer);
+		boolean hayCamino = AStar(stateObs, portal, elapsedTimer);
 		long tFin = System.nanoTime();
 		long tiempoTotalms = (tFin - tInicio)/1000000;
 		
@@ -194,5 +194,4 @@ public class AgenteDijkstra extends AbstractPlayer{
 		else
 			return ACTIONS.ACTION_NIL;
 	}
-
 }
