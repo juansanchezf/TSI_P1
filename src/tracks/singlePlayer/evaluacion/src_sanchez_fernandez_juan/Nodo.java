@@ -1,7 +1,5 @@
 package tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN;
-import java.util.LinkedList;
 import java.util.Objects;
-import java.util.Queue;
 import ontology.Types.ACTIONS;
 
 import tools.Vector2d;
@@ -9,32 +7,33 @@ import tools.Vector2d;
 public class Nodo implements Comparable<Nodo>{
 	Vector2d posicion;
 	Vector2d orientacion;
-	Queue<ACTIONS> secuencia;
+	
+	ACTIONS accion;
+	Nodo padre;
+	
 	int g = Integer.MAX_VALUE;
 	int h = 0;
 	int f = 0;
 	
-	
-	public Nodo(double x, double y) {
-		posicion = new Vector2d(x,y);
-		this.secuencia = new LinkedList<ACTIONS>();
-		this.orientacion = null;
-	}
-	
-	public Nodo(Vector2d posicion, Vector2d orientacion, int g) {
+	//Constructor para nodo inicial
+	public Nodo(Vector2d posicion, Vector2d orientacion) 
+	{
 		this.posicion = new Vector2d(posicion.x, posicion.y);
 		this.orientacion = new Vector2d(orientacion.x, orientacion.y);
-		this.g = g;
-		this.secuencia = new LinkedList<ACTIONS>();
+		this.g = 0;
+		this.padre = null;
+		this.accion = null;	
 	}
 	
+	//Constructor para nodos sucesores con misma orientacion y posicion
 	public Nodo(Nodo otro) {
 		this.posicion = new Vector2d(otro.posicion.x, otro.posicion.y);
 		this.orientacion = new Vector2d(otro.orientacion.x, otro.orientacion.y);
+		this.padre = otro;
+		this.accion = null;
 		this.g = otro.g;
 		this.h = otro.h;
-		this.f = otro.f;
-		this.secuencia = new LinkedList<ACTIONS>(otro.secuencia);
+		this.f = this.g + this.h;
 	}
 
 	public Vector2d getPosicion() {
@@ -89,29 +88,21 @@ public class Nodo implements Comparable<Nodo>{
 		this.orientacion = orientacion;
 	}
 	
-	
-	public void clearSecuencia() {
-		this.secuencia.clear();
-	}
-	
-	public void setSecuencia(Queue<ACTIONS> secuencia) {
-		this.secuencia = secuencia;
-	}
-	
 	public void addAccion(ACTIONS accion) {
-		this.secuencia.add(accion);
+		this.accion = accion;
 	}
-	
-	Queue<ACTIONS> getSecuencia() {
-		return this.secuencia;
-	}
-	
 	
 	@Override
 	public int compareTo(Nodo otro) {
 		actualizaF();
+		otro.actualizaF();
 		
-		return Integer.compare(this.f, otro.f);
+		int comparaF = Integer.compare(this.f, otro.f);
+		if(comparaF != 0) return comparaF;
+		int comparaG = Integer.compare(this.g, otro.g);
+		if(comparaG != 0) return comparaG;
+		return 0;
+		
 	}
 	
 	@Override

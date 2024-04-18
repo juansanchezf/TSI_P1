@@ -2,7 +2,6 @@ package tracks.singlePlayer;
 
 import java.util.Random;
 
-import core.logging.Logger;
 import tools.Utils;
 import tracks.ArcadeMachine;
 
@@ -15,7 +14,7 @@ public class Test {
     public static void main(String[] args) {
 
 		// Available tracks:
-		String sampleRandomController = "tracks.singlePlayer.simple.sampleRandom.Agent";
+		/*String sampleRandomController = "tracks.singlePlayer.simple.sampleRandom.Agent";
 		String doNothingController = "tracks.singlePlayer.simple.doNothing.Agent";
 		String sampleOneStepController = "tracks.singlePlayer.simple.sampleonesteplookahead.Agent";
 		String sampleFlatMCTSController = "tracks.singlePlayer.simple.greedyTreeSearch.Agent";
@@ -24,8 +23,10 @@ public class Test {
         String sampleRSController = "tracks.singlePlayer.advanced.sampleRS.Agent";
         String sampleRHEAController = "tracks.singlePlayer.advanced.sampleRHEA.Agent";
 		String sampleOLETSController = "tracks.singlePlayer.advanced.olets.Agent";
+		*/
 		String DijsktraController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteDijkstra";
 		String AStarController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteAStar";
+		String RTAStarController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteRTAStar";
 
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
@@ -52,7 +53,8 @@ public class Test {
 
 		// 2. This plays a game in a level by the controller.
 		ArcadeMachine.runOneGame(game, level1, visuals, AStarController, recordActionsFile, seed, 0);
-
+		ArcadeMachine.runOneGame(game, level1, visuals, DijsktraController, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, RTAStarController, recordActionsFile, seed, 0);
 
 		// 3. This replays a game from an action file previously recorded
 	//	 String readActionsFile = recordActionsFile;
