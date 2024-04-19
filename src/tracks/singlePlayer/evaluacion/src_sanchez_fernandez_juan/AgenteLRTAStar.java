@@ -12,15 +12,15 @@ import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
-public class AgenteRTAStar extends AbstractPlayer {
+public class AgenteLRTAStar extends AbstractPlayer{
 	Vector2d fescala, portal;
 	Stack<ACTIONS> camino;
 	ArrayList<Observation>[] obstaculos;
 
 	// Mapa que almacena los nodos y sus heuristicas previas.
 	HashMap<NodoRTA, Integer> heuristicas;
-
-	public AgenteRTAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+	
+	public AgenteLRTAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 		init(stateObs, elapsedTimer);
 	}
 
@@ -59,7 +59,7 @@ public class AgenteRTAStar extends AbstractPlayer {
 		return (int) (Math.abs(a.x - b.x) + Math.abs(a.y - b.y));
 	}
 
-	private ACTIONS RTAStar(StateObservation stateObs, Vector2d portal) {
+	private ACTIONS LRTAStar(StateObservation stateObs, Vector2d portal) {
 		PriorityQueue<NodoRTA> sucesores = new PriorityQueue<NodoRTA>();
 
 		// Obtenemos la posicion y orientación del avatar
@@ -189,17 +189,7 @@ public class AgenteRTAStar extends AbstractPlayer {
 		NodoRTA mejorSucesor = sucesores.poll();
 		ACTIONS accionSiguiente = mejorSucesor.getAccion();
 
-		NodoRTA segundoMejorSucesor = sucesores.poll();
-		int heuristicaAprendida;
-		if (segundoMejorSucesor.getH() != Integer.MAX_VALUE) {
-			/**
-			 * Ajustamos la heuristica del nodoActual con la de la f del segundo mejor sucesor.
-			 */
-			heuristicaAprendida = Math.max(nodoActual.getH(), segundoMejorSucesor.f());
-			nodoActual.setH(heuristicaAprendida);
-		} else {
-			heuristicaAprendida = Math.max(nodoActual.getH(), mejorSucesor.f());
-		}
+		int heuristicaAprendida = Math.max(nodoActual.getH(), mejorSucesor.f());
 
 		heuristicas.put(nodoActual, heuristicaAprendida);
 
@@ -207,7 +197,8 @@ public class AgenteRTAStar extends AbstractPlayer {
 	}
 
 	public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-		return RTAStar(stateObs, portal);
+		return LRTAStar(stateObs, portal);
 	}
+
 
 }

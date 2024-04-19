@@ -10,18 +10,15 @@ public class NodoRTA implements Comparable<NodoRTA>{
 	int idNodo;
 	
 	ACTIONS accion;
-	NodoRTA padre;
 	
 	int g = Integer.MAX_VALUE;
 	int h = 0;
-	int penalizacion = 10;
 	
 	//Constructor para nodo inicial
 	public NodoRTA(Vector2d posicion, Vector2d orientacion) {
 		this.posicion = new Vector2d(posicion.x, posicion.y);
 		this.orientacion = new Vector2d(orientacion.x, orientacion.y);
 		this.g = 0;
-		this.padre = null;
 		this.accion = null;
 		this.idNodo = contadorNodos++;
 	}
@@ -30,7 +27,6 @@ public class NodoRTA implements Comparable<NodoRTA>{
 	public NodoRTA(NodoRTA otro) {
 		this.posicion = new Vector2d(otro.posicion.x, otro.posicion.y);
 		this.orientacion = new Vector2d(otro.orientacion.x, otro.orientacion.y);
-		this.padre = otro;
 		this.accion = otro.accion;
 		this.g = otro.g;
 		this.h = otro.h;
@@ -96,11 +92,7 @@ public class NodoRTA implements Comparable<NodoRTA>{
 	public ACTIONS getAccion() {
 		return this.accion;
 	}
-	
-	public void penaliza() {
-		this.g += penalizacion;
-	}
-	
+
 	@Override
 	public int compareTo(NodoRTA otro) {		
 		int comparaF = Integer.compare(this.f(), otro.f());
@@ -121,13 +113,8 @@ public class NodoRTA implements Comparable<NodoRTA>{
 		double otroX = Math.round(otro.posicion.x);
 		double otroY = Math.round(otro.posicion.y);
 		
-
-	    double thisOrientX = Math.round(this.orientacion.x);
-	    double thisOrientY = Math.round(this.orientacion.y);
-	    double otroOrientX = Math.round(otro.orientacion.x);
-	    double otroOrientY = Math.round(otro.orientacion.y);
-	    
-	    return (thisX == otroX) && (thisY == otroY) && (thisOrientX == otroOrientX) && (thisOrientY == otroOrientY);
+		
+		return (thisX == otroX) && (thisY == otroY);
 	}
 	
 	@Override
