@@ -1,39 +1,42 @@
 package tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN;
 import java.util.Objects;
 import ontology.Types.ACTIONS;
-
 import tools.Vector2d;
 
-public class Nodo implements Comparable<Nodo>{
+public class NodoRTA implements Comparable<NodoRTA>{
+	static int contadorNodos = 0;
 	Vector2d posicion;
 	Vector2d orientacion;
+	int idNodo;
 	
 	ACTIONS accion;
-	Nodo padre;
+	NodoRTA padre;
 	
 	int g = Integer.MAX_VALUE;
 	int h = 0;
+	int penalizacion = 10;
 	
 	//Constructor para nodo inicial
-	public Nodo(Vector2d posicion, Vector2d orientacion) 
-	{
+	public NodoRTA(Vector2d posicion, Vector2d orientacion) {
 		this.posicion = new Vector2d(posicion.x, posicion.y);
 		this.orientacion = new Vector2d(orientacion.x, orientacion.y);
 		this.g = 0;
 		this.padre = null;
-		this.accion = null;	
+		this.accion = null;
+		this.idNodo = contadorNodos++;
 	}
 	
 	//Constructor para nodos sucesores con misma orientacion y posicion
-	public Nodo(Nodo otro) {
+	public NodoRTA(NodoRTA otro) {
 		this.posicion = new Vector2d(otro.posicion.x, otro.posicion.y);
 		this.orientacion = new Vector2d(otro.orientacion.x, otro.orientacion.y);
 		this.padre = otro;
-		this.accion = null;
+		this.accion = otro.accion;
 		this.g = otro.g;
 		this.h = otro.h;
+		this.idNodo = contadorNodos++;
 	}
-
+	
 	public Vector2d getPosicion() {
 		return this.posicion;
 	}
@@ -90,27 +93,35 @@ public class Nodo implements Comparable<Nodo>{
 		this.accion = accion;
 	}
 	
+	public ACTIONS getAccion() {
+		return this.accion;
+	}
+	
+	public void penaliza() {
+		this.g += penalizacion;
+	}
+	
 	@Override
-	public int compareTo(Nodo otro) {	
+	public int compareTo(NodoRTA otro) {		
 		int comparaF = Integer.compare(this.f(), otro.f());
-		if(comparaF != 0) return comparaF;
+		if (comparaF != 0) return comparaF;
 		int comparaG = Integer.compare(this.g, otro.g);
-		if(comparaG != 0) return comparaG;
-		return 0;
-		
+		if (comparaG != 0) return comparaG;
+		return Integer.compare(this.idNodo, otro.idNodo);
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
-	    if (this == obj) return true;
-	    if (obj == null || getClass() != obj.getClass()) return false;
-	    Nodo otro = (Nodo) obj;
-	    
-	    double thisX = Math.round(this.posicion.x);
-	    double thisY = Math.round(this.posicion.y);
-	    double otroX = Math.round(otro.posicion.x);
-	    double otroY = Math.round(otro.posicion.y);
-	    
+		if (this == obj) return true;
+		if (obj == null || getClass() != obj.getClass()) return false;
+		
+		NodoRTA otro = (NodoRTA) obj;
+		double thisX = Math.round(this.posicion.x);
+		double thisY = Math.round(this.posicion.y);
+		double otroX = Math.round(otro.posicion.x);
+		double otroY = Math.round(otro.posicion.y);
+		
+
 	    double thisOrientX = Math.round(this.orientacion.x);
 	    double thisOrientY = Math.round(this.orientacion.y);
 	    double otroOrientX = Math.round(otro.orientacion.x);
@@ -118,10 +129,10 @@ public class Nodo implements Comparable<Nodo>{
 	    
 	    return (thisX == otroX) && (thisY == otroY) && (thisOrientX == otroOrientX) && (thisOrientY == otroOrientY);
 	}
-
+	
 	@Override
 	public int hashCode() {
-	    return Objects.hash(Math.round(posicion.x), Math.round(posicion.y), Math.round(orientacion.x), Math.round(orientacion.y));
+		return Objects.hash(Math.round(posicion.x), Math.round(posicion.y));
 	}
 
 }

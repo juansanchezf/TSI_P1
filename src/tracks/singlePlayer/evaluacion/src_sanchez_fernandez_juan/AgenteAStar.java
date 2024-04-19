@@ -141,7 +141,7 @@ public class AgenteAStar extends AbstractPlayer{
 			Vector2d newPosUp = new Vector2d(actual.getColumna(), actual.getFila()-1);
 			Vector2d orientacionUp = new Vector2d(0,-1);
 			
-			if(hijoUp.getFila()-1 >= 0 && esTransitable(newPosUp)) 
+			if(hijoUp.getFila() - 1 >= 0 && esTransitable(newPosUp)) 
 			{
 				if(orientActual.equals(orientacionUp)) 
 					hijoUp.setPosicion(newPosUp);
@@ -152,7 +152,6 @@ public class AgenteAStar extends AbstractPlayer{
 				{
 					hijoUp.setG(actual.getG() + 1);
 					hijoUp.setH(distManhattan(hijoUp.getPosicion(), portal));
-					hijoUp.actualizaF();
 					hijoUp.addAccion(ACTIONS.ACTION_UP);
 					abiertos.add(hijoUp);
 				}
@@ -160,7 +159,8 @@ public class AgenteAStar extends AbstractPlayer{
 			
 			//ABAJO
 			Nodo hijoDown = new Nodo(actual);
-			Vector2d newPosDown = new Vector2d(actual.getColumna(), actual.getFila() + 1), orientacionDown = new Vector2d(0,1); 
+			Vector2d newPosDown = new Vector2d(actual.getColumna(), actual.getFila() + 1);
+			Vector2d orientacionDown = new Vector2d(0,1); 
 			
 			if (hijoDown.getFila() + 1 <= (stateObs.getObservationGrid()[0].length - 1) && esTransitable(newPosDown))
 			{
@@ -173,7 +173,6 @@ public class AgenteAStar extends AbstractPlayer{
 				{
 					hijoDown.setG(actual.getG() + 1);
 					hijoDown.setH(distManhattan(hijoDown.getPosicion(), portal));
-					hijoDown.actualizaF();
 					hijoDown.addAccion(ACTIONS.ACTION_DOWN);
 					abiertos.add(hijoDown);
 				}
@@ -181,7 +180,8 @@ public class AgenteAStar extends AbstractPlayer{
 			
 			// IZQUIERDA
 			Nodo hijoLeft = new Nodo(actual);
-			Vector2d newPosLeft = new Vector2d(actual.getColumna() - 1, actual.getFila()), orientacionLeft = new Vector2d(-1,0);
+			Vector2d newPosLeft = new Vector2d(actual.getColumna() - 1, actual.getFila());
+			Vector2d orientacionLeft = new Vector2d(-1,0);
 						
 			if(hijoLeft.getColumna() - 1 >= 0 && esTransitable(newPosLeft))
             {				
@@ -194,7 +194,6 @@ public class AgenteAStar extends AbstractPlayer{
                 {
 					hijoLeft.setG(actual.getG() + 1);
 					hijoLeft.setH(distManhattan(hijoLeft.getPosicion(), portal));
-					hijoLeft.actualizaF();
                     hijoLeft.addAccion(ACTIONS.ACTION_LEFT);
                     abiertos.add(hijoLeft);
                 }
@@ -202,7 +201,8 @@ public class AgenteAStar extends AbstractPlayer{
 			
 			// DERECHA
 			Nodo hijoRight = new Nodo(actual);
-			Vector2d newPosRight = new Vector2d(actual.getColumna() + 1, actual.getFila()), orientacionRight = new Vector2d(1,0);			
+			Vector2d newPosRight = new Vector2d(actual.getColumna() + 1, actual.getFila());
+			Vector2d orientacionRight = new Vector2d(1,0);			
 			if(hijoRight.getColumna() + 1 <= (stateObs.getObservationGrid().length - 1) && esTransitable(newPosRight))
             {                
                 if(orientActual.equals(orientacionRight))
@@ -214,7 +214,6 @@ public class AgenteAStar extends AbstractPlayer{
                 {
 					hijoRight.setG(actual.getG() + 1);
 					hijoRight.setH(distManhattan(hijoRight.getPosicion(), portal));
-					hijoRight.actualizaF();
 					hijoRight.addAccion(ACTIONS.ACTION_RIGHT);
 					abiertos.add(hijoRight);
                 }

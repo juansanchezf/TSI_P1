@@ -39,6 +39,11 @@ public class Vector2d
             return false;
         }
     }
+    
+    @Override
+	public int hashCode() {
+		return (int) (x * 1000 + y);
+	}
 
     /**
      * Builds a vector from its coordinates.
