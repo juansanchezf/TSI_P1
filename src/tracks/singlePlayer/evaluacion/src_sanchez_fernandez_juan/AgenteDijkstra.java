@@ -97,9 +97,11 @@ public class AgenteDijkstra extends AbstractPlayer{
 
 		Nodo actual = null;
 		
-		while(!abiertos.isEmpty()) {
+		while(true) {
+			
 			actual = abiertos.poll();
 			
+			// if actual == objetivo
 			if (actual.getPosicion().equals(portal)) {
 				camino = reconstruirCamino(actual);
 				System.out.println("DIJKSTRA:");
@@ -107,6 +109,7 @@ public class AgenteDijkstra extends AbstractPlayer{
 				return true;
 			}
 			
+			// visitados.add(actual);
 			// Si ya se ha visitado este nodo, se salta, si no, se añade a cerrados
 			if (!cerrados.add(actual)) continue;
 						
@@ -124,12 +127,13 @@ public class AgenteDijkstra extends AbstractPlayer{
 				else 
 					hijoUp.setOrientacion(orientacionUp);
 				
-				if (!cerrados.contains(hijoUp))
-				{
-					hijoUp.setG(hijoUp.getG() + 1);	
-					hijoUp.addAccion(ACTIONS.ACTION_UP);
-					abiertos.add(hijoUp);
-				}	
+				hijoUp.setG(hijoUp.getG() + 1);	
+				hijoUp.addAccion(ACTIONS.ACTION_UP);
+				
+				if (!cerrados.contains(hijoUp) && hijoUp.getG() > actual.getG() + 1)
+					hijoUp.setG(actual.getG()+1);
+				
+				abiertos.add(hijoUp);
 			} 
 			
 			// ABAJO
@@ -144,12 +148,14 @@ public class AgenteDijkstra extends AbstractPlayer{
 				else
 					hijoDown.setOrientacion(orientacionDown);
 				
+				hijoDown.setG(hijoDown.getG() + 1);
+				hijoDown.addAccion(ACTIONS.ACTION_DOWN);
+				
 				if (!cerrados.contains(hijoDown)) 
-				{
-					hijoDown.setG(hijoDown.getG() + 1);
-					hijoDown.addAccion(ACTIONS.ACTION_DOWN);
-					abiertos.add(hijoDown);
-				}
+					hijoDown.setG(actual.getG() + 1);
+				
+				
+				abiertos.add(hijoDown);
 			}
 			
 			// IZQUIERDA
@@ -164,12 +170,13 @@ public class AgenteDijkstra extends AbstractPlayer{
                 else
                 	hijoLeft.setOrientacion(orientacionLeft);
 
+				hijoLeft.setG(hijoLeft.getG() + 1);
+				hijoLeft.addAccion(ACTIONS.ACTION_LEFT);
+
 				if(!cerrados.contains(hijoLeft))
-                {
-					hijoLeft.setG(hijoLeft.getG() + 1);
-                    hijoLeft.addAccion(ACTIONS.ACTION_LEFT);
-                    abiertos.add(hijoLeft);
-                }
+					hijoLeft.setG(actual.getG() + 1);                
+
+				abiertos.add(hijoLeft);
             }	
 			
 			// DERECHA
@@ -183,15 +190,15 @@ public class AgenteDijkstra extends AbstractPlayer{
                 else
                 	hijoRight.setOrientacion(orientacionRight);
 
+                hijoRight.setG(hijoRight.getG() + 1);
+                hijoRight.addAccion(ACTIONS.ACTION_RIGHT);
+                
                 if(!cerrados.contains(hijoRight))
-                {
-                	hijoRight.setG(hijoRight.getG() + 1);
-                    hijoRight.addAccion(ACTIONS.ACTION_RIGHT);
-                    abiertos.add(hijoRight);
-                }
+                	hijoRight.setG(actual.getG() + 1);
+                
+                abiertos.add(hijoRight);
             }
-		}		
-		return false;
+		}
     }
 	
 	
