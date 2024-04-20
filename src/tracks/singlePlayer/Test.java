@@ -26,8 +26,8 @@ public class Test {
 		*/
     	
     	
-		//String DijsktraController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteDijkstra";
-		//String AStarController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteAStar";
+		String DijsktraController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteDijkstra";
+		String AStarController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteAStar";
 		String RTAStarController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteRTAStar";
 		String LRTAStarController = "tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN.AgenteLRTAStar";
 		
@@ -40,7 +40,7 @@ public class Test {
 		int seed = new Random().nextInt();
 
 		// Game and level to play
-		int gameIdx = 123;
+		int gameIdx = 122;
 		int levelIdx = 2; // level names from 0 to 4 (game_lvlN.txt).
 		String gameName = games[gameIdx][1];
 		String game = games[gameIdx][0];
@@ -58,7 +58,7 @@ public class Test {
 		//ArcadeMachine.runOneGame(game, level1, visuals, DijsktraController, recordActionsFile, seed, 0);
 		//ArcadeMachine.runOneGame(game, level1, visuals, AStarController, recordActionsFile, seed, 0);
 		//ArcadeMachine.runOneGame(game, level1, visuals, RTAStarController, recordActionsFile, seed, 0);
-		ArcadeMachine.runOneGame(game, level1, visuals, LRTAStarController, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, AStarController, recordActionsFile, seed, 0);
 		// 3. This replays a game from an action file previously recorded
 	//	 String readActionsFile = recordActionsFile;
 	//	 ArcadeMachine.replayGame(game, level1, visuals, readActionsFile);

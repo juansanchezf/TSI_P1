@@ -19,6 +19,8 @@ public class AgenteRTAStar extends AbstractPlayer {
 
 	// Mapa que almacena los nodos y sus heuristicas previas.
 	HashMap<NodoRTA, Integer> heuristicas;
+	
+	long tiempoAcumulado;
 
 	public AgenteRTAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 		init(stateObs, elapsedTimer);
@@ -37,6 +39,8 @@ public class AgenteRTAStar extends AbstractPlayer {
 		portal = objetivos[0].get(0).position;
 		portal.x = Math.floor(portal.x / fescala.x);
 		portal.y = Math.floor(portal.y / fescala.y);
+		
+		tiempoAcumulado = 0;
 	}
 
 	private boolean esTransitable(StateObservation stateObs, Vector2d posicion) {
@@ -207,7 +211,15 @@ public class AgenteRTAStar extends AbstractPlayer {
 	}
 
 	public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-		return RTAStar(stateObs, portal);
+		
+		long tInicio = System.nanoTime();
+		ACTIONS sigAcc = RTAStar(stateObs, portal);
+		long tFin = System.nanoTime();
+		long tiempoTotalms = (tFin - tInicio)/1000000;
+		
+		tiempoAcumulado += tiempoTotalms;
+		
+		return sigAcc;
 	}
 
 }
