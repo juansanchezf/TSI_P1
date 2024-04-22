@@ -21,6 +21,8 @@ public class AgenteRTAStar extends AbstractPlayer {
 	HashMap<NodoRTA, Integer> heuristicas;
 	
 	long tiempoAcumulado;
+	int nodosExpandidos;
+	int llamadasAlgoritmo;
 
 	public AgenteRTAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 		init(stateObs, elapsedTimer);
@@ -40,7 +42,9 @@ public class AgenteRTAStar extends AbstractPlayer {
 		portal.x = Math.floor(portal.x / fescala.x);
 		portal.y = Math.floor(portal.y / fescala.y);
 		
+		nodosExpandidos = 0;
 		tiempoAcumulado = 0;
+		llamadasAlgoritmo = 0;
 	}
 
 	private boolean esTransitable(StateObservation stateObs, Vector2d posicion) {
@@ -73,16 +77,12 @@ public class AgenteRTAStar extends AbstractPlayer {
 
 		NodoRTA nodoActual = new NodoRTA(posicion, orientActual);
 
-		if (nodoActual.getPosicion().equals(portal)) {
-			System.out.println("Numero de nodos expandidos:" + heuristicas.size());
-			return ACTIONS.ACTION_NIL;
-		}
-
 		// Generamos sucesores
 
 		// Arriba
 		NodoRTA hijoUp = new NodoRTA(nodoActual);
 		Vector2d newPosUp = new Vector2d(nodoActual.getColumna(), nodoActual.getFila() - 1);
+		Vector2d orientUp = new Vector2d(0, -1);
 
 		if (hijoUp.getFila() - 1 >= 0 && esTransitable(stateObs, newPosUp)) {
 			/**
@@ -103,26 +103,23 @@ public class AgenteRTAStar extends AbstractPlayer {
 				hijoUp.setH(distManhattan(hijoUp.getPosicion(), portal));
 
 			/**
-			 * Añadimos el coste de moverse a dicha casilla (siempre 1) y la accion
-			 * que origina dciho movimiento. Finalemente añadimos el nodo a la cola
+			 * Añadimos el coste de moverse a dicha casilla (1 si mira en la dirección y 2 si mira en otra dirección) 
+			 * y la accion que origina dciho movimiento. Finalemente añadimos el nodo a la cola
 			 * con prioridad para eventualmente obtener el de menor coste.
 			 */
-			hijoUp.setG(1);
+			if (orientActual.equals(orientUp))
+				hijoUp.setG(1);
+			else
+				hijoUp.setG(2);
 			hijoUp.addAccion(ACTIONS.ACTION_UP);
-			sucesores.add(hijoUp);
-		} else {
-			/**
-			 * Si la casilla no es transitable, añadimos el nodo pero con una h infinita.
-			 * Lo almacenamos en la tabla de heurísticas para no volver a expandirlo.
-			 */
-			hijoUp.setH(Integer.MAX_VALUE);
 			sucesores.add(hijoUp);
 		}
 
 		// Abajo
 		NodoRTA hijoDown = new NodoRTA(nodoActual);
 		Vector2d newPosDown = new Vector2d(nodoActual.getColumna(), nodoActual.getFila() + 1);
-
+		Vector2d orientDown = new Vector2d(0, 1);
+		
 		if (hijoDown.getFila() + 1 <= (stateObs.getObservationGrid()[0].length - 1) && esTransitable(stateObs, newPosDown)) {
 
 			hijoDown.setPosicion(newPosDown);
@@ -132,18 +129,20 @@ public class AgenteRTAStar extends AbstractPlayer {
 			else
 				hijoDown.setH(distManhattan(hijoDown.getPosicion(), portal));
 
-			hijoDown.setG(1);
+			if (orientActual.equals(orientDown))
+				hijoDown.setG(1);
+			else
+				hijoDown.setG(2);
+			
 			hijoDown.addAccion(ACTIONS.ACTION_DOWN);
-			sucesores.add(hijoDown);
-		} else {
-			hijoDown.setH(Integer.MAX_VALUE);
 			sucesores.add(hijoDown);
 		}
 
 		// Izquierda
 		NodoRTA hijoLeft = new NodoRTA(nodoActual);
 		Vector2d newPosLeft = new Vector2d(nodoActual.getColumna() - 1, nodoActual.getFila());
-
+		Vector2d orientLeft = new Vector2d(-1, 0);
+		
 		if (hijoLeft.getColumna() - 1 >= 0 && esTransitable(stateObs, newPosLeft)) {
 
 			hijoLeft.setPosicion(newPosLeft);
@@ -153,18 +152,20 @@ public class AgenteRTAStar extends AbstractPlayer {
 			else
 				hijoLeft.setH(distManhattan(hijoLeft.getPosicion(), portal));
 
-			hijoLeft.setG(1);
+			if (orientActual.equals(orientLeft))
+				hijoLeft.setG(1);
+			else
+				hijoLeft.setG(2);
+			
 			hijoLeft.addAccion(ACTIONS.ACTION_LEFT);
-			sucesores.add(hijoLeft);
-		} else {
-			hijoLeft.setH(Integer.MAX_VALUE);
 			sucesores.add(hijoLeft);
 		}
 
 		// Derecha
 		NodoRTA hijoRight = new NodoRTA(nodoActual);
 		Vector2d newPosRight = new Vector2d(nodoActual.getColumna() + 1, nodoActual.getFila());
-
+		Vector2d orientRight = new Vector2d(1, 0);
+		
 		if (hijoRight.getColumna() + 1 <= (stateObs.getObservationGrid().length - 1)
 				&& esTransitable(stateObs, newPosRight)) {
 			hijoRight.setPosicion(newPosRight);
@@ -174,14 +175,16 @@ public class AgenteRTAStar extends AbstractPlayer {
 			else
 				hijoRight.setH(distManhattan(hijoRight.getPosicion(), portal));
 
-			hijoRight.setG(1);
+			if (orientActual.equals(orientRight))
+				hijoRight.setG(1);
+			else
+				hijoRight.setG(2);
 			hijoRight.addAccion(ACTIONS.ACTION_RIGHT);
 			sucesores.add(hijoRight);
-		} else {
-			hijoRight.setH(Integer.MAX_VALUE);
-			sucesores.add(hijoRight);
 		}
+		
 
+		nodosExpandidos+= sucesores.size();
 		/**
 		 * - Estrategia de movimiento: cogemos el nodo más prometedor
 		 * ( @mejorSucesor ) y devolvemos la acción que lo ha originado.
@@ -189,24 +192,34 @@ public class AgenteRTAStar extends AbstractPlayer {
 		 * - Regla de aprendizaje: h(x) = max(h(x), 2º min(f(y))
 		 *
 		 */
-
 		NodoRTA mejorSucesor = sucesores.poll();
 		ACTIONS accionSiguiente = mejorSucesor.getAccion();
-
-		NodoRTA segundoMejorSucesor = sucesores.poll();
+		
 		int heuristicaAprendida;
-		if (segundoMejorSucesor.getH() != Integer.MAX_VALUE) {
+		
+		if(!sucesores.isEmpty()) {
+			NodoRTA segundoMejorSucesor = sucesores.poll();
 			/**
 			 * Ajustamos la heuristica del nodoActual con la de la f del segundo mejor sucesor.
 			 */
 			heuristicaAprendida = Math.max(nodoActual.getH(), segundoMejorSucesor.f());
-			nodoActual.setH(heuristicaAprendida);
-		} else {
-			heuristicaAprendida = Math.max(nodoActual.getH(), mejorSucesor.f());
 		}
-
+		else
+			heuristicaAprendida = Math.max(nodoActual.getH(), mejorSucesor.f());
+		
+		nodoActual.setH(heuristicaAprendida);
+		
 		heuristicas.put(nodoActual, heuristicaAprendida);
 
+		llamadasAlgoritmo++;
+		
+		if (mejorSucesor.getPosicion().equals(portal)) {
+			System.out.println("RTA*");
+			System.out.println("Tiempo acumulado: " + tiempoAcumulado + "ms");
+			System.out.println("Tamaño de la ruta calculada: " + llamadasAlgoritmo);
+			System.out.println("Numero de nodos expandidos: " + nodosExpandidos);
+		}
+		
 		return accionSiguiente;
 	}
 

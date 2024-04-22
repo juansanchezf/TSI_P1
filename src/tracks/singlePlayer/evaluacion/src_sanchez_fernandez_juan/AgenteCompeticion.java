@@ -1,29 +1,35 @@
 package tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN;
+
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.PriorityQueue;
+import java.util.Stack;
+
 import core.game.Observation;
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
 import ontology.Types.ACTIONS;
 import tools.ElapsedCpuTimer;
+import tools.Pair;
 import tools.Vector2d;
 
-import java.util.PriorityQueue;
-import java.util.Stack;
-import java.util.HashSet;
-
-public class AgenteAStar extends AbstractPlayer{
+public class AgenteCompeticion extends AbstractPlayer{
 	boolean intransitables[][];
 	Vector2d fescala;
 	Stack<ACTIONS> camino;
 	Vector2d portal;
 	boolean planificado;
 	
+	ArrayList<Vector2d> posGemas;
+	int gemasRecogidas;
+	boolean gemaEncontrada;
+	boolean planFinal;
 	/**
 	 * @brief Constructor del agente
 	 * @param stateObs
 	 * @param elapsedTimer
 	 */
-	public AgenteAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
+	public AgenteCompeticion(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 		init(stateObs, elapsedTimer);
 	}
 	
@@ -35,6 +41,8 @@ public class AgenteAStar extends AbstractPlayer{
 	public void init(StateObservation stateObs, ElapsedCpuTimer elapsedTimer){
 		// Obtenemos las posiciones de los obstaculos
 		ArrayList<Observation>[] obstaculos = stateObs.getImmovablePositions();
+		ArrayList<Observation>[] gemas = stateObs.getResourcesPositions(stateObs.getAvatarPosition());
+		
 		
 		fescala = new Vector2d(stateObs.getWorldDimension().width / stateObs.getObservationGrid().length,
 				stateObs.getWorldDimension().height / stateObs.getObservationGrid()[0].length);
@@ -50,6 +58,21 @@ public class AgenteAStar extends AbstractPlayer{
 			}
 		}
 		
+		posGemas = new ArrayList<Vector2d>();
+		for(int i = 0; i < gemas.length; i++)
+		{
+			for (int j = 0; j < gemas[i].size(); j++) 
+			{
+				Vector2d posG = gemas[i].get(j).position;
+				posG.x = Math.floor(posG.x / fescala.x);
+				posG.y = Math.floor(posG.y / fescala.y);
+				posGemas.add(posG);
+				
+//				System.out.println("Gema en: " + gemas[i].get(j).position.x + " " + gemas[i].get(j).position.y);
+			}
+		}
+		
+				
 		// Obtenemos las posiciones de los portales
 		ArrayList<Observation>[] objetivos = stateObs.getPortalsPositions(stateObs.getAvatarPosition());
 		
@@ -58,7 +81,74 @@ public class AgenteAStar extends AbstractPlayer{
 		portal.x = Math.floor(portal.x / fescala.x);
 		portal.y = Math.floor(portal.y / fescala.y);
 		
+		
 		planificado = false;
+		gemasRecogidas = 0;
+		gemaEncontrada = false;
+		planFinal = false;
+	}
+	
+	private boolean cercaNPC(StateObservation stateObs) 
+	{
+		Vector2d posAvatar = new Vector2d(stateObs.getAvatarPosition().x /fescala.x ,	stateObs.getAvatarPosition().y/fescala.y);
+		
+		
+		ArrayList<Observation>[] npcs = stateObs.getNPCPositions(posAvatar);
+		
+		for (int i = 0; i < npcs.length; i++) {
+			for (int j = 0; j < npcs[i].size(); j++) {
+				Vector2d posNPC = npcs[i].get(j).position;
+				posNPC.x = Math.floor(posNPC.x / fescala.x);
+				posNPC.y = Math.floor(posNPC.y / fescala.y);
+
+				if (distManhattan(posAvatar, posNPC) < 4) {
+					return true;
+				}
+			}
+		}
+		
+		
+		return false;
+		
+	}
+	
+	private ACTIONS alejarNPC(StateObservation stateObs) {
+		Vector2d posAvatar = new Vector2d(stateObs.getAvatarPosition().x / fescala.x,
+				stateObs.getAvatarPosition().y / fescala.y);
+
+		ArrayList<Observation>[] npcs = stateObs.getNPCPositions(posAvatar);
+
+		for (int i = 0; i < npcs.length; i++) {
+			for (int j = 0; j < npcs[i].size(); j++) {
+				Vector2d posNPC = npcs[i].get(j).position;
+				posNPC.x = Math.floor(posNPC.x / fescala.x);
+				posNPC.y = Math.floor(posNPC.y / fescala.y);
+
+				/* La x son las columnas y la y las filas 
+				 * entonces si la x del npc es mayor a la mia significa que está a la derecha
+				 * por lo que me muevo a la izquierda y si no alreves.
+				 * En el caso de las filas si la y del NPC es mayor significa que está
+				 * ABAJO por lo que me muevo arriba.
+				 */
+				if (posAvatar.x < posNPC.x) 
+				{
+					return ACTIONS.ACTION_LEFT;
+				} 
+				else if (posAvatar.x > posNPC.x) 
+				{
+					return ACTIONS.ACTION_RIGHT;
+				} else if (posAvatar.y < posNPC.y) 
+				{
+					return ACTIONS.ACTION_UP;
+				} else if (posAvatar.y > posNPC.y) 
+				{
+					return ACTIONS.ACTION_DOWN;
+				}
+				
+			}
+		}
+
+		return ACTIONS.ACTION_NIL;
 	}
 	
 	/**
@@ -106,7 +196,7 @@ public class AgenteAStar extends AbstractPlayer{
 	 * @param elapsedTimer
 	 * @return
 	 */
-	private boolean AStar(StateObservation stateObs, Vector2d portal, ElapsedCpuTimer elapsedTimer)
+	private boolean AStar(StateObservation stateObs, Vector2d objetivo, ElapsedCpuTimer elapsedTimer)
 	{
 		// Inicializamos la cola de prioridad de nodos abiertos y el conjunto de nodos visitados
 		PriorityQueue<Nodo> abiertos = new PriorityQueue<Nodo>();
@@ -117,7 +207,7 @@ public class AgenteAStar extends AbstractPlayer{
 		
 		//Se inicializa el nodo a la posición y orientación del avatar
 		Nodo inicial = new Nodo(posAvatar, stateObs.getAvatarOrientation());
-		inicial.setH(distManhattan(posAvatar, portal));
+		inicial.setH(distManhattan(posAvatar, objetivo));
 		
 		abiertos.add(inicial);
 		
@@ -126,10 +216,8 @@ public class AgenteAStar extends AbstractPlayer{
 		while(!abiertos.isEmpty()) {
 			actual = abiertos.poll();
 			
-			if (actual.getPosicion().equals(portal)) {
-				System.out.println("A*:");
+			if (actual.getPosicion().equals(objetivo)) {
 				camino = reconstruirCamino(actual);
-				System.out.println("Numero de nodos expandidos: " + cerrados.size());
 				return true;
 			}
 			
@@ -152,7 +240,7 @@ public class AgenteAStar extends AbstractPlayer{
 				if(!cerrados.contains(hijoUp)) 
 				{
 					hijoUp.setG(actual.getG() + 1);
-					hijoUp.setH(distManhattan(hijoUp.getPosicion(), portal));
+					hijoUp.setH(distManhattan(hijoUp.getPosicion(), objetivo));
 					hijoUp.addAccion(ACTIONS.ACTION_UP);
 					abiertos.add(hijoUp);
 				}
@@ -173,7 +261,7 @@ public class AgenteAStar extends AbstractPlayer{
 				if (!cerrados.contains(hijoDown)) 
 				{
 					hijoDown.setG(actual.getG() + 1);
-					hijoDown.setH(distManhattan(hijoDown.getPosicion(), portal));
+					hijoDown.setH(distManhattan(hijoDown.getPosicion(), objetivo));
 					hijoDown.addAccion(ACTIONS.ACTION_DOWN);
 					abiertos.add(hijoDown);
 				}
@@ -194,7 +282,7 @@ public class AgenteAStar extends AbstractPlayer{
 				if(!cerrados.contains(hijoLeft))
                 {
 					hijoLeft.setG(actual.getG() + 1);
-					hijoLeft.setH(distManhattan(hijoLeft.getPosicion(), portal));
+					hijoLeft.setH(distManhattan(hijoLeft.getPosicion(), objetivo));
                     hijoLeft.addAccion(ACTIONS.ACTION_LEFT);
                     abiertos.add(hijoLeft);
                 }
@@ -214,7 +302,7 @@ public class AgenteAStar extends AbstractPlayer{
                 if(!cerrados.contains(hijoRight))
                 {
 					hijoRight.setG(actual.getG() + 1);
-					hijoRight.setH(distManhattan(hijoRight.getPosicion(), portal));
+					hijoRight.setH(distManhattan(hijoRight.getPosicion(), objetivo));
 					hijoRight.addAccion(ACTIONS.ACTION_RIGHT);
 					abiertos.add(hijoRight);
                 }
@@ -226,31 +314,114 @@ public class AgenteAStar extends AbstractPlayer{
 
 	
 	public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer){
-		// Llamamos a A* si no hay aun un camino
-		if(!planificado) 
+		while(stateObs.getGameScore() < 10) 
 		{
-			// Llamamos a A*
-			long tInicio = System.nanoTime();
-			boolean hayCamino = AStar(stateObs, portal, elapsedTimer);
-			long tFin = System.nanoTime();
-			long tiempoTotalms = (tFin - tInicio)/1000000;
-			
-			if(hayCamino) 
+			if(!gemaEncontrada) 
 			{
-				System.out.println("Tiempo de planificación A*: " + tiempoTotalms + " ms");
-				System.out.println("Tamaño de la ruta: " + camino.size());
+				Vector2d sigGema = posGemas.get(0);
+				gemaEncontrada = AStar(stateObs, sigGema, elapsedTimer);
+				System.out.println("Gema encontrada en: " + sigGema.x + " " + sigGema.y);
 			}
-			else
-				System.out.println("Camino no encontrado.");
 			
-			planificado = true;
+			if(camino.isEmpty()) {
+				posGemas.remove(0);
+                gemaEncontrada = false;
+            }
+			else if(!cercaNPC(stateObs))
+			{
+				while (!camino.isEmpty() && ! (camino == null)) 
+				{
+					return camino.pop();
+				}
+			}
+			else {
+				return alejarNPC(stateObs);
+			}
 		}
 		
-		// Devolvemos la siguiente accion del camino si hay uno
-		if (camino != null && !camino.isEmpty()) {
-			return camino.pop();
+		if(!planFinal) 
+		{
+			planFinal = AStar(stateObs, portal, elapsedTimer);
+			
+			while (!camino.isEmpty()) {
+				return camino.pop();
+			}
+			
 		}
-		else
-			return ACTIONS.ACTION_NIL;
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+//		while(posGemas.size() > 0) 
+//		{
+//			if(!planificado)
+//			{
+//				Vector2d gemaPos = posGemas.get(0);
+//                boolean hayCamino = AStar(stateObs, gemaPos, elapsedTimer);
+//                
+//                if (hayCamino)
+//                {
+//                    System.out.println("Gema encontrada en: " + gemaPos.x + " " + gemaPos.y);
+//                    planificado = true;
+//                    
+//                    //reinicializamos la posición de la gema para ir a la siguiente
+//                    posGemas.remove(0);
+//                }
+//                
+//			}
+//			
+//			boolean hayPeligro = cercaNPC(stateObs);
+//			
+//			if (camino != null && !camino.isEmpty() && !hayPeligro) 
+//            {
+//                return camino.pop();
+//            }
+//            else if (hayPeligro) 
+//            {
+//            	System.out.println("NPC cerca");
+//            	planificado = false;
+//                return alejarNPC(stateObs);
+//            }
+//            else 
+//            {
+//                planificado = false;
+//            }
+//
+//		}
+//		
+//		planificado = false;
+//		
+//		System.out.println("Gemas recogidas");
+//		double recogidas = stateObs.getGameScore();
+//		System.out.println("RECOGIDAS: " + recogidas);
+//		
+//		if(!planificado) 
+//		{
+//			boolean hayCamino = AStar(stateObs, portal, elapsedTimer);
+//			if (hayCamino) {
+//				System.out.println("Portal encontrado en: " + portal.x + " " + portal.y);
+//				planificado = true;
+//			}
+//			
+//			if (camino != null && !camino.isEmpty()) {
+//				return camino.pop();
+//			} else {
+//				planificado = false;
+//			}
+//		}
+		
+		return ACTIONS.ACTION_NIL;
 	}
 }

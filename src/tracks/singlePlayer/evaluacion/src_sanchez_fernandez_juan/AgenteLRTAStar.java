@@ -3,8 +3,6 @@ package tracks.singlePlayer.evaluacion.src_SANCHEZ_FERNANDEZ_JUAN;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
-import java.util.Stack;
-
 import core.game.Observation;
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
@@ -14,11 +12,14 @@ import tools.Vector2d;
 
 public class AgenteLRTAStar extends AbstractPlayer{
 	Vector2d fescala, portal;
-	Stack<ACTIONS> camino;
 	ArrayList<Observation>[] obstaculos;
 
 	// Mapa que almacena los nodos y sus heuristicas previas.
 	HashMap<NodoRTA, Integer> heuristicas;
+	
+	long tiempoAcumulado;
+	int nodosExpandidos;
+	int llamadasAlgoritmo;
 	
 	public AgenteLRTAStar(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 		init(stateObs, elapsedTimer);
@@ -37,6 +38,10 @@ public class AgenteLRTAStar extends AbstractPlayer{
 		portal = objetivos[0].get(0).position;
 		portal.x = Math.floor(portal.x / fescala.x);
 		portal.y = Math.floor(portal.y / fescala.y);
+		
+		nodosExpandidos = 0;
+		tiempoAcumulado = 0;
+		llamadasAlgoritmo = 0;
 	}
 
 	private boolean esTransitable(StateObservation stateObs, Vector2d posicion) {
@@ -79,7 +84,8 @@ public class AgenteLRTAStar extends AbstractPlayer{
 		// Arriba
 		NodoRTA hijoUp = new NodoRTA(nodoActual);
 		Vector2d newPosUp = new Vector2d(nodoActual.getColumna(), nodoActual.getFila() - 1);
-
+		Vector2d orientUp = new Vector2d(0, -1);
+		
 		if (hijoUp.getFila() - 1 >= 0 && esTransitable(stateObs, newPosUp)) {
 			/**
 			 * Si el nodo es transitable ajustamos la posición 
@@ -103,22 +109,21 @@ public class AgenteLRTAStar extends AbstractPlayer{
 			 * que origina dciho movimiento. Finalemente añadimos el nodo a la cola
 			 * con prioridad para eventualmente obtener el de menor coste.
 			 */
-			hijoUp.setG(1);
+			if (orientActual.equals(orientUp))
+				hijoUp.setG(1);
+			else
+				hijoUp.setG(2);
+			
 			hijoUp.addAccion(ACTIONS.ACTION_UP);
 			sucesores.add(hijoUp);
-		} else {
-			/**
-			 * Si la casilla no es transitable, añadimos el nodo pero con una h infinita.
-			 * Lo almacenamos en la tabla de heurísticas para no volver a expandirlo.
-			 */
-			hijoUp.setH(Integer.MAX_VALUE);
-			sucesores.add(hijoUp);
+			nodosExpandidos++;
 		}
 
 		// Abajo
 		NodoRTA hijoDown = new NodoRTA(nodoActual);
 		Vector2d newPosDown = new Vector2d(nodoActual.getColumna(), nodoActual.getFila() + 1);
-
+		Vector2d orientDown = new Vector2d(0, 1);
+		
 		if (hijoDown.getFila() + 1 <= (stateObs.getObservationGrid()[0].length - 1) && esTransitable(stateObs, newPosDown)) {
 
 			hijoDown.setPosicion(newPosDown);
@@ -128,18 +133,19 @@ public class AgenteLRTAStar extends AbstractPlayer{
 			else
 				hijoDown.setH(distManhattan(hijoDown.getPosicion(), portal));
 
-			hijoDown.setG(1);
+			if (orientActual.equals(orientDown))
+				hijoDown.setG(1);
+			else
+				hijoDown.setG(2);	
 			hijoDown.addAccion(ACTIONS.ACTION_DOWN);
 			sucesores.add(hijoDown);
-		} else {
-			hijoDown.setH(Integer.MAX_VALUE);
-			sucesores.add(hijoDown);
 		}
-
+		
 		// Izquierda
 		NodoRTA hijoLeft = new NodoRTA(nodoActual);
 		Vector2d newPosLeft = new Vector2d(nodoActual.getColumna() - 1, nodoActual.getFila());
-
+		Vector2d orientLeft = new Vector2d(-1, 0);
+		
 		if (hijoLeft.getColumna() - 1 >= 0 && esTransitable(stateObs, newPosLeft)) {
 
 			hijoLeft.setPosicion(newPosLeft);
@@ -149,18 +155,20 @@ public class AgenteLRTAStar extends AbstractPlayer{
 			else
 				hijoLeft.setH(distManhattan(hijoLeft.getPosicion(), portal));
 
-			hijoLeft.setG(1);
+			if (orientActual.equals(orientLeft))
+				hijoLeft.setG(1);
+			else
+				hijoLeft.setG(2);
+			
 			hijoLeft.addAccion(ACTIONS.ACTION_LEFT);
-			sucesores.add(hijoLeft);
-		} else {
-			hijoLeft.setH(Integer.MAX_VALUE);
 			sucesores.add(hijoLeft);
 		}
 
 		// Derecha
 		NodoRTA hijoRight = new NodoRTA(nodoActual);
 		Vector2d newPosRight = new Vector2d(nodoActual.getColumna() + 1, nodoActual.getFila());
-
+		Vector2d orientRight = new Vector2d(1, 0);
+		
 		if (hijoRight.getColumna() + 1 <= (stateObs.getObservationGrid().length - 1)
 				&& esTransitable(stateObs, newPosRight)) {
 			hijoRight.setPosicion(newPosRight);
@@ -170,13 +178,16 @@ public class AgenteLRTAStar extends AbstractPlayer{
 			else
 				hijoRight.setH(distManhattan(hijoRight.getPosicion(), portal));
 
-			hijoRight.setG(1);
+			if (orientActual.equals(orientRight))
+				hijoRight.setG(1);
+			else
+				hijoRight.setG(2);
+			
 			hijoRight.addAccion(ACTIONS.ACTION_RIGHT);
 			sucesores.add(hijoRight);
-		} else {
-			hijoRight.setH(Integer.MAX_VALUE);
-			sucesores.add(hijoRight);
 		}
+		
+		nodosExpandidos+= sucesores.size();
 
 		/**
 		 * - Estrategia de movimiento: cogemos el nodo más prometedor
@@ -192,12 +203,28 @@ public class AgenteLRTAStar extends AbstractPlayer{
 		int heuristicaAprendida = Math.max(nodoActual.getH(), mejorSucesor.f());
 
 		heuristicas.put(nodoActual, heuristicaAprendida);
+		
+		llamadasAlgoritmo++;
+		
+		if (mejorSucesor.getPosicion().equals(portal)) {
+			System.out.println("LRTA*");
+			System.out.println("Tiempo acumulado: " + tiempoAcumulado + "ms");
+			System.out.println("Tamaño de la ruta calculada: " + llamadasAlgoritmo);
+			System.out.println("Numero de nodos expandidos: " + nodosExpandidos);
+		}
 
 		return accionSiguiente;
 	}
 
 	public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-		return LRTAStar(stateObs, portal);
+		long tInicio = System.nanoTime();
+		ACTIONS sigAccion = LRTAStar(stateObs, portal);
+		long tFin = System.nanoTime();
+		long tiempoTotalms = (tFin - tInicio) / 1000000;
+		
+		tiempoAcumulado += tiempoTotalms;
+		
+		return sigAccion;
 	}
 
 

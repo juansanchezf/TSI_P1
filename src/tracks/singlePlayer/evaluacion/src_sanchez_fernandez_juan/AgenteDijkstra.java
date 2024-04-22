@@ -29,6 +29,11 @@ public class AgenteDijkstra extends AbstractPlayer{
 		init(stateObs,elapsedTimer);
 	}
 	
+	/**
+	 * @brief Inicializa el agente
+	 * @param stateObs
+	 * @param elapsedTimer
+	 */
 	public void init(StateObservation stateObs, ElapsedCpuTimer elapsedTimer){
 		// Obtenemos las posiciones de los obstaculos
 		ArrayList<Observation>[] obstaculos = stateObs.getImmovablePositions();
@@ -55,8 +60,8 @@ public class AgenteDijkstra extends AbstractPlayer{
 		portal.x = Math.floor(portal.x / fescala.x);
 		portal.y = Math.floor(portal.y / fescala.y);
 		
+		// Variable booleana para saber si ya se ha planificado
 		planificado = false;
-		
 	}
 	
 	
@@ -69,6 +74,12 @@ public class AgenteDijkstra extends AbstractPlayer{
 		return !intransitables[(int)posicion.x][(int) posicion.y];
 	}
 	
+	/**
+	 * @brief Método que reconstruye el camino desde el nodo final al inicial
+	 *  a través de los nodos padres de cada nodo
+	 * @param finalNodo
+	 * @return
+	 */
 	private Stack<ACTIONS> reconstruirCamino(Nodo finalNodo)
 	{
 		Stack<ACTIONS> camino = new Stack<ACTIONS>();
@@ -86,6 +97,8 @@ public class AgenteDijkstra extends AbstractPlayer{
 	private boolean Dijkstra(StateObservation stateObs, Vector2d portal, ElapsedCpuTimer elapsedTimer) {
 		// Inicializamos la cola de prioridad de nodos abiertos y el conjunto de nodos visitados
 		PriorityQueue<Nodo> abiertos = new PriorityQueue<Nodo>();
+		
+		//Usamos un HashSet para comprobar si un nodo ya ha sido visitado
 		HashSet<Nodo> cerrados = new HashSet<Nodo>();
 
 		// Obtenemos la posicion del avatar y creamos el nodo inicial
@@ -95,11 +108,10 @@ public class AgenteDijkstra extends AbstractPlayer{
 		Nodo inicial = new Nodo(posAvatar, stateObs.getAvatarOrientation());		
 		abiertos.add(inicial);		
 
-		Nodo actual = null;
 		
 		while(true) {
 			
-			actual = abiertos.poll();
+			Nodo actual = abiertos.poll();
 			
 			// if actual == objetivo
 			if (actual.getPosicion().equals(portal)) {
@@ -130,8 +142,10 @@ public class AgenteDijkstra extends AbstractPlayer{
 				hijoUp.setG(hijoUp.getG() + 1);	
 				hijoUp.addAccion(ACTIONS.ACTION_UP);
 				
-				if (!cerrados.contains(hijoUp) && hijoUp.getG() > actual.getG() + 1)
+				if (!cerrados.contains(hijoUp) && hijoUp.getG() > actual.getG() + 1) {
 					hijoUp.setG(actual.getG()+1);
+					System.out.println("G actual: " + actual.getG());
+				}
 				
 				abiertos.add(hijoUp);
 			} 
